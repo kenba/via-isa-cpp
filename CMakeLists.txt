@@ -40,6 +40,10 @@ if (WIN32)
   # Add the C++ Guidelines Support Library include files
   set(CPP_GSL_DIR $ENV{CPP_GSL_DIR})
   include_directories(${CPP_GSL_DIR}/include)
+
+  # Add the Via Units Library include files
+  set(ViaUnits_DIR $ENV{ViaUnits_DIR})
+  include_directories(${ViaUnits_DIR}/include)
 endif()
 
 if (INSTALL_PYTHON)
