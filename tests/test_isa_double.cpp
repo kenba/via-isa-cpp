@@ -30,8 +30,6 @@ using namespace via::units::si;
 using namespace via::units::non_si;
 
 namespace {
-const double ISA_MSL_SPEED_OF_SOUND = 340.29398802608898;
-
 const double CALCULATION_TOLERANCE(1.0e-6);
 } // namespace
 
@@ -42,8 +40,7 @@ BOOST_AUTO_TEST_SUITE(Test_isa_double)
 BOOST_AUTO_TEST_CASE(test_calculate_isa_pressure) {
   // calculate_troposphere_pressure
   Pascals<double> result(calculate_isa_pressure(Metres<double>(0.0)));
-  BOOST_CHECK_CLOSE(constants::SEA_LEVEL_PRESSURE<double>.v(), result.v(),
-                    CALCULATION_TOLERANCE);
+  BOOST_CHECK_EQUAL(constants::SEA_LEVEL_PRESSURE<double>.v(), result.v());
 
   result = calculate_isa_pressure(Metres<double>(1000.0));
   BOOST_CHECK_CLOSE(89874.563, result.v(), CALCULATION_TOLERANCE);
@@ -108,21 +105,22 @@ BOOST_AUTO_TEST_CASE(test_calculate_isa_altitude) {
 
 //////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(test_calculate_isa_temperature) {
-  Kelvin<double> result{calculate_isa_temperature(Metres<double>(500.0))};
-  BOOST_CHECK_CLOSE(constants::SEA_LEVEL_TEMPERATURE<double>.v() - 3.25,
-                    result.v(), CALCULATION_TOLERANCE);
+  Kelvin<double> result{calculate_isa_temperature(Metres<double>(0.0))};
+  BOOST_CHECK_EQUAL(constants::SEA_LEVEL_TEMPERATURE<double>.v(), result.v());
+
+  result = calculate_isa_temperature(Metres<double>(500.0));
+  BOOST_CHECK_EQUAL(constants::SEA_LEVEL_TEMPERATURE<double>.v() - 3.25,
+                    result.v());
 
   result = calculate_isa_temperature(Metres<double>(2000.0));
-  BOOST_CHECK_CLOSE(constants::SEA_LEVEL_TEMPERATURE<double>.v() - 13.0,
-                    result.v(), CALCULATION_TOLERANCE);
+  BOOST_CHECK_EQUAL(constants::SEA_LEVEL_TEMPERATURE<double>.v() - 13.0,
+                    result.v());
 
-  result = calculate_isa_temperature(Metres<double>(11000.0));
-  BOOST_CHECK_CLOSE(constants::TROPOPAUSE_TEMPERATURE<double>.v(), result.v(),
-                    CALCULATION_TOLERANCE);
+  result = calculate_isa_temperature(constants::TROPOPAUSE_ALTITUDE<double>);
+  BOOST_CHECK_EQUAL(constants::TROPOPAUSE_TEMPERATURE<double>.v(), result.v());
 
   result = calculate_isa_temperature(Metres<double>(12000.0));
-  BOOST_CHECK_CLOSE(constants::TROPOPAUSE_TEMPERATURE<double>.v(), result.v(),
-                    CALCULATION_TOLERANCE);
+  BOOST_CHECK_EQUAL(constants::TROPOPAUSE_TEMPERATURE<double>.v(), result.v());
 }
 //////////////////////////////////////////////////////////////////////////////
 
