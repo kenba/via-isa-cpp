@@ -22,8 +22,8 @@
 // THE SOFTWARE.
 //////////////////////////////////////////////////////////////////////////////
 /// @file
-/// @brief The ICAO Standard Atmosphere primary constants and characteristics.
-/// @see Manual of the ICAO Standard Atmosphere; ICAO Doc 7488/3.
+/// @brief The ICAO Standard Atmosphere primary constants and characteristics,
+/// see Manual of the ICAO Standard Atmosphere: ICAO Doc 7488/3.
 //////////////////////////////////////////////////////////////////////////////
 #include <via/units.hpp>
 

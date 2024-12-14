@@ -26,7 +26,27 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @mainpage via-isa-cpp
 ///
-/// The library defines:
+/// An implementation of the [International Civil Aviation
+/// Organization](https://icao.int/) (ICAO) [International Standard
+/// Atmosphere](https://en.wikipedia.org/wiki/International_Standard_Atmosphere)
+/// (ISA), see [ICAO Doc
+/// 7488/3](https://standart.aero/en/icao/book/doc-7488-manual-of-the-icao-standard-atmosphere-extended-to-80-kilometres-262-500-feet-en-cons).
+///
+/// The library also includes functions for calculating:
+///
+/// - true airspeed ([TAS](https://en.wikipedia.org/wiki/True_airspeed)) from
+/// calibrated airspeed
+/// ([CAS](https://en.wikipedia.org/wiki/Calibrated_airspeed)), pressure and
+/// temperature;
+/// - CAS from TAS, pressure and temperature;
+/// - TAS from [Mach number](https://en.wikipedia.org/wiki/Mach_number) and
+/// temperature;
+/// - and the crossover altitude between CAS / MACH flight regimes.
+///
+/// The equations for the functions above are from
+/// [BADA User Manual revision
+/// 3-12](https://www.scribd.com/document/289480324/1-User-Manual-Bada-3-12).
+//////////////////////////////////////////////////////////////////////////////
 #include "isa/constants.hpp"
 #include <cmath>
 #include <gsl/assert>
@@ -40,8 +60,8 @@ template <typename T>
   requires std::floating_point<T>
 constexpr T U{(constants::K<T> - T(1)) / constants::K<T>};
 
-// Another coefficient used in pressure conversions.
-// See BADA Equation 3.2-14
+/// Another coefficient used in pressure conversions.
+/// See BADA Equation 3.2-14
 template <typename T>
   requires std::floating_point<T>
 constexpr T INV_U{T(1) / U<T>};
@@ -77,7 +97,7 @@ constexpr T TROPOPAUSE_PRESSURE_FACTOR{
 /// Calculate the ISA pressure below the tropopause for the given altitude.
 /// See BADA Rev 3.12, Eq 3.1-18
 /// @pre altitude <= TROPOPAUSE_ALTITUDE
-/// @param the pressure altitude in metres.
+/// @param altitude the pressure altitude in metres.
 /// @return the pressure in Pascals.
 template <typename T>
   requires std::floating_point<T>
@@ -97,7 +117,7 @@ calculate_troposphere_pressure(const units::si::Metres<T> altitude)
 /// Calculate the ISA pressure in the tropopause for the given altitude.
 /// See BADA Rev 3.12, Eq 3.1-20
 /// @pre altitude >= TROPOPAUSE_ALTITUDE
-/// @param the pressure altitude in metres.
+/// @param altitude the pressure altitude in metres.
 /// @return the pressure in Pascals.
 template <typename T>
   requires std::floating_point<T>
