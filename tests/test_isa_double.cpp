@@ -20,7 +20,7 @@
 // THE SOFTWARE.
 //
 /// @file
-/// @brief Contains tests for the via::units::non_si namespace.
+/// @brief Contains tests for the via::isa namespace.
 //////////////////////////////////////////////////////////////////////////////
 #include "via/isa.hpp"
 #include <boost/test/unit_test.hpp>
