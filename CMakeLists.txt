@@ -93,7 +93,7 @@ if (CPP_UNIT_TESTS)
 
             find_program(LCOV lcov REQUIRED)
             add_custom_target(coverage
-                COMMAND ${LCOV} --directory . --capture --output-file lcov.info
+                COMMAND ${LCOV} --directory . --capture --ignore-errors mismatch --output-file lcov.info
             )
         endif()
     endif()
