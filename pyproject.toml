@@ -4,4 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "via_isa"
-version = "0.2.0"
+version = "0.3.0"
+
+[tool.scikit-build]
+cmake.build-type = "RelWithDebInfo"
