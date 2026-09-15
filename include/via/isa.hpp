@@ -1,7 +1,7 @@
 #pragma once
 
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2024 Ken Barker
+// Copyright (c) 2024-2026 Ken Barker
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"),
@@ -219,6 +219,43 @@ constexpr auto calculate_isa_temperature(
   return (temperature > constants::TROPOPAUSE_TEMPERATURE<T>)
              ? temperature
              : constants::TROPOPAUSE_TEMPERATURE<T>;
+}
+
+/// Estimate the altitude difference (pressure alttiude - geopotential altitude)
+/// for a difference in ISA temperature at a given altitude and reference
+/// elevation.
+///
+/// It assumes a linear variation of temperature with height.
+/// It produces results within 5 per cent of the accurate correction for
+/// reference elevations up to 3000m and altitudes up to 1500m above the
+/// reference.
+/// See ICAO Doc 8168 Volume I, Part III Section 4.3.3.
+/// @pre altitude < TROPOPAUSE_ALTITUDE
+/// @pre altitude >= ref_elevation
+///
+/// @param altitude the barometric altitude in Metres.
+/// @param delta_temperature the difference from ISA temperature at Sea level.
+/// @param ref_elevation the reference elevation (usually aerodrome) in Metres,
+/// default zero.
+///
+/// @return the altitude difference in Metres.
+template <typename T>
+  requires std::floating_point<T>
+[[nodiscard("Pure Function")]]
+constexpr auto estimate_temperature_correction_delta_altitude(
+    const units::si::Metres<T> altitude, units::si::Kelvin<T> delta_temperature,
+    units::si::Metres<T> ref_elevation = units::si::Metres<T>(0))
+    -> units::si::Metres<T> {
+  Expects(altitude < constants::TROPOPAUSE_ALTITUDE<T>);
+  Expects(altitude >= ref_elevation);
+
+  const auto delta_altitude{altitude - ref_elevation};
+  const T denominator = {
+      delta_temperature.v() + constants::SEA_LEVEL_TEMPERATURE<T>.v() +
+      altitude.half().v() * constants::TEMPERATURE_GRADIENT<T>};
+  const T delta{delta_altitude.v() * -delta_temperature.v() / denominator};
+
+  return units::si::Metres<T>(delta);
 }
 
 /// Calculate the air density given the air temperature and pressure.

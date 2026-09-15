@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2024 Ken Barker
+// Copyright (c) 2024-2026 Ken Barker
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"),
@@ -121,6 +121,57 @@ BOOST_AUTO_TEST_CASE(test_calculate_isa_temperature) {
 
   result = calculate_isa_temperature(Metres<double>(12000.0));
   BOOST_CHECK_EQUAL(constants::TROPOPAUSE_TEMPERATURE<double>.v(), result.v());
+}
+//////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////
+BOOST_AUTO_TEST_CASE(test_estimate_temperature_correction_delta_altitude) {
+  // Test values from Eurocae ED-323, Appendoix H, Table H-2
+  const auto five_thousand_feet_m{Feet(5000.0).to_metres()};
+  const auto ten_thousand_feet_m{Feet(10000.0).to_metres()};
+  const auto fifteen_thousand_feet_m{ten_thousand_feet_m +
+                                     five_thousand_feet_m};
+
+  // ISA temperature, Sea Level
+  Feet<double> result{Feet(estimate_temperature_correction_delta_altitude(
+      five_thousand_feet_m, Kelvin(0.0)))};
+  BOOST_CHECK_EQUAL(0.0, result.v());
+
+  // aircaft 5000ft above Sea Level
+  result = Feet(estimate_temperature_correction_delta_altitude(
+      five_thousand_feet_m, Kelvin(25.0)));
+  BOOST_CHECK_CLOSE(-405, result.v(), 0.2);
+
+  // aircaft 5000ft above Sea Level
+  result = Feet(estimate_temperature_correction_delta_altitude(
+      five_thousand_feet_m, Kelvin(-15.0)));
+  BOOST_CHECK_CLOSE(280, result.v(), 0.2);
+
+  // airfield at 5000ft
+  // airrcaft at airfield elevation
+  result = Feet(estimate_temperature_correction_delta_altitude(
+      five_thousand_feet_m, Kelvin(34.9), five_thousand_feet_m));
+  BOOST_CHECK_EQUAL(0.0, result.v());
+
+  // aircaft 5000ft above airfield elevation
+  result = Feet(estimate_temperature_correction_delta_altitude(
+      ten_thousand_feet_m, Kelvin(34.9), five_thousand_feet_m));
+  BOOST_CHECK_CLOSE(-565, result.v(), 1.5);
+
+  // aircaft 5000ft above airfield elevation
+  result = Feet(estimate_temperature_correction_delta_altitude(
+      ten_thousand_feet_m, Kelvin(-20.1), five_thousand_feet_m));
+  BOOST_CHECK_CLOSE(398, result.v(), 2.5);
+
+  // aircaft 10000ft above airfield elevation
+  result = Feet(estimate_temperature_correction_delta_altitude(
+      fifteen_thousand_feet_m, Kelvin(34.9), five_thousand_feet_m));
+  BOOST_CHECK_CLOSE(-1147, result.v(), 1.5);
+
+  // aircaft 10000ft above airfield elevation
+  result = Feet(estimate_temperature_correction_delta_altitude(
+      fifteen_thousand_feet_m, Kelvin(-20.1), five_thousand_feet_m));
+  BOOST_CHECK_CLOSE(813, result.v(), 2.5);
 }
 //////////////////////////////////////////////////////////////////////////////
 

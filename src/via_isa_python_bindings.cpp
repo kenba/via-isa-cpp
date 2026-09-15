@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2024 Ken Barker
+// Copyright (c) 2024-2026 Ken Barker
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"),
@@ -53,6 +53,10 @@ PYBIND11_MODULE(via_isa, m) {
         &via::isa::calculate_isa_temperature<double>,
         "Calculate the ISA temperature corresponding to the given altitude and "
         "difference in Sea level temperature.");
+  m.def("estimate_temperature_correction_delta_altitude",
+        &via::isa::estimate_temperature_correction_delta_altitude<double>,
+        "Estimate the altitude difference for a difference from ISA "
+        "temperature at a given altitude and reference elevation.");
   m.def("calculate_density", &via::isa::calculate_density<double>,
         "Calculate the air density given the air temperature and pressure.");
   m.def("calculate_true_air_speed", &via::isa::calculate_true_air_speed<double>,
