@@ -57,6 +57,10 @@ PYBIND11_MODULE(via_isa, m) {
         &via::isa::estimate_temperature_correction_delta_altitude<double>,
         "Estimate the altitude difference for a difference from ISA "
         "temperature at a given altitude and reference elevation.");
+  m.def("calculate_temperature_correction_delta_altitude",
+        &via::isa::calculate_temperature_correction_delta_altitude<double>,
+        "Calculate the altitude difference for a difference from ISA "
+        "temperature at a given altitude and reference elevation.");
   m.def("calculate_density", &via::isa::calculate_density<double>,
         "Calculate the air density given the air temperature and pressure.");
   m.def("calculate_true_air_speed", &via::isa::calculate_true_air_speed<double>,

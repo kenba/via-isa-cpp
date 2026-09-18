@@ -50,6 +50,7 @@
 #include "isa/constants.hpp"
 #include <cmath>
 #include <gsl/assert>
+#include <via/units/non_si.hpp>
 
 namespace via {
 namespace isa {
@@ -243,8 +244,9 @@ template <typename T>
   requires std::floating_point<T>
 [[nodiscard("Pure Function")]]
 constexpr auto estimate_temperature_correction_delta_altitude(
-    const units::si::Metres<T> altitude, units::si::Kelvin<T> delta_temperature,
-    units::si::Metres<T> ref_elevation = units::si::Metres<T>(0))
+    const units::si::Metres<T> altitude,
+    const units::si::Kelvin<T> delta_temperature,
+    const units::si::Metres<T> ref_elevation = units::si::Metres<T>(0))
     -> units::si::Metres<T> {
   Expects(altitude < constants::TROPOPAUSE_ALTITUDE<T>);
   Expects(altitude >= ref_elevation);
@@ -256,6 +258,97 @@ constexpr auto estimate_temperature_correction_delta_altitude(
   const T delta{delta_altitude.v() * -delta_temperature.v() / denominator};
 
   return units::si::Metres<T>(delta);
+}
+
+/// Calculate the altitude difference (pressure altitude - geopotential
+/// altitude) for a difference in ISA temperature at a given altitude and
+/// reference elevation.
+///
+/// See: RTCA DO-283C/Eurocae ED-323, December 2024 Appendix H Section H.2.4.
+///
+/// @param altitude the barometric altitude in Metres.
+/// @param delta_temperature the difference from ISA temperature at Sea level.
+/// @param ref_elevation the reference elevation (usually aerodrome) in Metres.
+///
+/// @return the altitude difference in Metres.
+template <typename T>
+  requires std::floating_point<T>
+[[nodiscard("Pure Function")]]
+constexpr auto
+accurate_temperature_correction(const units::si::Metres<T> altitude,
+                                const units::si::Kelvin<T> delta_temperature,
+                                const units::si::Metres<T> ref_elevation)
+    -> units::si::Metres<T> {
+  const T temp_ratio{altitude.v() * constants::TEMPERATURE_GRADIENT<T> /
+                     (ref_elevation.v() * constants::TEMPERATURE_GRADIENT<T> +
+                      constants::SEA_LEVEL_TEMPERATURE<T>.v())};
+  const T ln_temp_ratio{std::log(T(1) + temp_ratio)};
+  const T value{(-delta_temperature.v() /
+                 constants::TEMPERATURE_GRADIENT<T>)*ln_temp_ratio};
+
+  return units::si::Metres<T>(value);
+}
+
+/// Calculate the altitude difference (pressure altitude - geopotential
+/// altitude) for a difference in ISA temperature at a given altitude and
+/// reference elevation.
+///
+/// See: RTCA DO-283C/Eurocae ED-323, December 2024 Appendix H Section H.2.4.
+/// and  ICAO Doc 8168 Volume II, Seventh Edition (2020).
+///
+/// Note: the equation in ICAO Doc 8168 Volume I Fifth Edition (2006),
+/// Part III Section 4.3.4 is incorrect.
+///
+/// @param altitude the barometric altitude in Metres.
+/// @param delta_temperature the difference from ISA temperature at Sea level.
+/// @param ref_elevation the reference elevation (usually aerodrome) in Metres,
+/// default Sea level.
+/// @param iteration_tolerance the tolerance of the result in Metres,
+/// default half a Foot.
+///
+/// @return the altitude difference in Metres.
+template <typename T>
+  requires std::floating_point<T>
+[[nodiscard("Pure Function")]]
+constexpr auto calculate_temperature_correction_delta_altitude(
+    const units::si::Metres<T> altitude,
+    const units::si::Kelvin<T> delta_temperature,
+    const units::si::Metres<T> ref_elevation = units::si::Metres<T>(0),
+    const units::si::Metres<T> iteration_tolerance =
+        units::non_si::Feet<T>(0.5).to_metres())
+    -> std::tuple<units::si::Metres<T>, unsigned> {
+  constexpr unsigned MAX_ITERS{10u};
+
+  Expects(altitude < constants::TROPOPAUSE_ALTITUDE<T>);
+  Expects(altitude >= ref_elevation);
+  Expects(iteration_tolerance.v() >= std::numeric_limits<T>::epsilon());
+
+  const auto delta_altitude{altitude - ref_elevation};
+  const auto initial_value{accurate_temperature_correction(
+      delta_altitude, delta_temperature, ref_elevation)};
+  if (initial_value.abs() < iteration_tolerance) {
+    // the initial_value is within tolerance
+    return {initial_value, 0u};
+  }
+
+  // iterate to find the altitude difference
+  auto value{initial_value};
+  unsigned iterations{1u};
+  for (; iterations < MAX_ITERS; ++iterations) {
+    // calculate the value by adding the previous_value to the geopotential
+    // altitude
+    const auto previous_value{value};
+    value = accurate_temperature_correction(delta_altitude + previous_value,
+                                            delta_temperature, ref_elevation);
+
+    // determine whether the value is within tolerance
+    const auto delta{value - previous_value};
+    if (delta.abs() < iteration_tolerance) {
+      break;
+    }
+  }
+
+  return {value, iterations};
 }
 
 /// Calculate the air density given the air temperature and pressure.

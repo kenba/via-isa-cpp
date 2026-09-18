@@ -46,6 +46,7 @@ from via_isa import (
     calculate_isa_altitude,
     calculate_isa_pressure,
     calculate_isa_temperature,
+    calculate_temperature_correction_delta_altitude,
     calculate_true_air_speed,
     estimate_temperature_correction_delta_altitude,
     mach_true_air_speed,
@@ -169,6 +170,63 @@ def test_estimate_temperature_correction_delta_altitude():
         )
     )
     assert_almost_equal(793, result.v(), 0)  # accurate 813
+
+
+def test_calculate_temperature_correction_delta_altitude():
+    # Test values from Eurocae ED-323, Appendoix H, Table H-2
+
+    five_thousand_feet_m = Feet(5000.0).to_metres()
+    ten_thousand_feet_m = Feet(10000.0).to_metres()
+    fifteen_thousand_feet_m = ten_thousand_feet_m + five_thousand_feet_m
+
+    # aircaft 5000ft above Sea Level
+    result, iters = calculate_temperature_correction_delta_altitude(
+        five_thousand_feet_m, Kelvin(25.0), Metres(0.0), Feet(0.5).to_metres()
+    )
+    assert_almost_equal(-405, Feet(result).v(), 1)
+    assert 3 == iters
+
+    # aircaft 5000ft above Sea Level
+    result, iters = calculate_temperature_correction_delta_altitude(
+        five_thousand_feet_m, Kelvin(-15.0), Metres(0.0), Feet(0.5).to_metres()
+    )
+    assert_almost_equal(280, Feet(result).v(), 1)
+    assert 3 == iters
+
+    # airfield at 5000ft
+    # aircaft 5000ft above airfield elevation
+    result, iters = calculate_temperature_correction_delta_altitude(
+        ten_thousand_feet_m, Kelvin(34.9), five_thousand_feet_m, Feet(0.5).to_metres()
+    )
+    assert_almost_equal(-565, Feet(result).v(), 0)
+    assert 4 == iters
+
+    # aircaft 5000ft above Sea Level
+    result, iters = calculate_temperature_correction_delta_altitude(
+        ten_thousand_feet_m, Kelvin(-20.1), five_thousand_feet_m, Feet(0.5).to_metres()
+    )
+    assert_almost_equal(398, Feet(result).v(), 0)
+    assert 3 == iters
+
+    # aircaft 10000ft above airfield elevation
+    result, iters = calculate_temperature_correction_delta_altitude(
+        fifteen_thousand_feet_m,
+        Kelvin(34.9),
+        five_thousand_feet_m,
+        Feet(0.5).to_metres(),
+    )
+    assert_almost_equal(-1147, Feet(result).v(), 1)
+    assert 4 == iters
+
+    # aircaft 10000ft above airfield elevation
+    result, iters = calculate_temperature_correction_delta_altitude(
+        fifteen_thousand_feet_m,
+        Kelvin(-20.1),
+        five_thousand_feet_m,
+        Feet(0.5).to_metres(),
+    )
+    assert_almost_equal(813, Feet(result).v(), 0)
+    assert 3 == iters
 
 
 def test_calculate_density():

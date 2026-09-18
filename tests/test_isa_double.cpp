@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(test_calculate_isa_temperature) {
 
 //////////////////////////////////////////////////////////////////////////////
 BOOST_AUTO_TEST_CASE(test_estimate_temperature_correction_delta_altitude) {
-  // Test values from Eurocae ED-323, Appendoix H, Table H-2
+  // Test values from Eurocae ED-323, Appendix H, Table H-2
   const auto five_thousand_feet_m{Feet(5000.0).to_metres()};
   const auto ten_thousand_feet_m{Feet(10000.0).to_metres()};
   const auto fifteen_thousand_feet_m{ten_thousand_feet_m +
@@ -137,41 +137,100 @@ BOOST_AUTO_TEST_CASE(test_estimate_temperature_correction_delta_altitude) {
       five_thousand_feet_m, Kelvin(0.0)))};
   BOOST_CHECK_EQUAL(0.0, result.v());
 
-  // aircaft 5000ft above Sea Level
+  // aircraft 5000ft above Sea Level
   result = Feet(estimate_temperature_correction_delta_altitude(
       five_thousand_feet_m, Kelvin(25.0)));
   BOOST_CHECK_CLOSE(-405, result.v(), 0.2);
 
-  // aircaft 5000ft above Sea Level
+  // aircraft 5000ft above Sea Level
   result = Feet(estimate_temperature_correction_delta_altitude(
       five_thousand_feet_m, Kelvin(-15.0)));
   BOOST_CHECK_CLOSE(280, result.v(), 0.2);
 
   // airfield at 5000ft
-  // airrcaft at airfield elevation
+  // aircraft at airfield elevation
   result = Feet(estimate_temperature_correction_delta_altitude(
       five_thousand_feet_m, Kelvin(34.9), five_thousand_feet_m));
   BOOST_CHECK_EQUAL(0.0, result.v());
 
-  // aircaft 5000ft above airfield elevation
+  // aircraft 5000ft above airfield elevation
   result = Feet(estimate_temperature_correction_delta_altitude(
       ten_thousand_feet_m, Kelvin(34.9), five_thousand_feet_m));
   BOOST_CHECK_CLOSE(-565, result.v(), 1.5);
 
-  // aircaft 5000ft above airfield elevation
+  // aircraft 5000ft above airfield elevation
   result = Feet(estimate_temperature_correction_delta_altitude(
       ten_thousand_feet_m, Kelvin(-20.1), five_thousand_feet_m));
   BOOST_CHECK_CLOSE(398, result.v(), 2.5);
 
-  // aircaft 10000ft above airfield elevation
+  // aircraft 10000ft above airfield elevation
   result = Feet(estimate_temperature_correction_delta_altitude(
       fifteen_thousand_feet_m, Kelvin(34.9), five_thousand_feet_m));
   BOOST_CHECK_CLOSE(-1147, result.v(), 1.5);
 
-  // aircaft 10000ft above airfield elevation
+  // aircraft 10000ft above airfield elevation
   result = Feet(estimate_temperature_correction_delta_altitude(
       fifteen_thousand_feet_m, Kelvin(-20.1), five_thousand_feet_m));
   BOOST_CHECK_CLOSE(813, result.v(), 2.5);
+}
+//////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////
+BOOST_AUTO_TEST_CASE(test_calculate_temperature_correction_delta_altitude) {
+  // Test values from Eurocae ED-323, Appendix H, Table H-2
+  const auto five_thousand_feet_m{Feet(5000.0).to_metres()};
+  const auto ten_thousand_feet_m{Feet(10000.0).to_metres()};
+  const auto fifteen_thousand_feet_m{ten_thousand_feet_m +
+                                     five_thousand_feet_m};
+
+  // ISA temperature, Sea Level
+  auto result{calculate_temperature_correction_delta_altitude(
+      five_thousand_feet_m, Kelvin(0.0))};
+  BOOST_CHECK_EQUAL(0.0, std::get<0>(result).v());
+  BOOST_CHECK_EQUAL(0, std::get<1>(result));
+
+  // aircraft 5000ft above Sea Level
+  result = calculate_temperature_correction_delta_altitude(five_thousand_feet_m,
+                                                           Kelvin(25.0));
+  BOOST_CHECK_CLOSE(-405, Feet(std::get<0>(result)).v(), 0.02);
+  BOOST_CHECK_EQUAL(3, std::get<1>(result));
+
+  // aircraft 5000ft above Sea Level
+  result = calculate_temperature_correction_delta_altitude(five_thousand_feet_m,
+                                                           Kelvin(-15.0));
+  BOOST_CHECK_CLOSE(280, Feet(std::get<0>(result)).v(), 0.02);
+  BOOST_CHECK_EQUAL(3, std::get<1>(result));
+
+  // airfield at 5000ft
+  // aircraft at airfield elevation
+  result = calculate_temperature_correction_delta_altitude(
+      five_thousand_feet_m, Kelvin(34.9), five_thousand_feet_m);
+  BOOST_CHECK_EQUAL(0.0, std::get<0>(result).v());
+  BOOST_CHECK_EQUAL(0, std::get<1>(result));
+
+  // aircraft 5000ft above airfield elevation
+  result = calculate_temperature_correction_delta_altitude(
+      ten_thousand_feet_m, Kelvin(34.9), five_thousand_feet_m);
+  BOOST_CHECK_CLOSE(-565, Feet(std::get<0>(result)).v(), 0.05);
+  BOOST_CHECK_EQUAL(4, std::get<1>(result));
+
+  // aircraft 5000ft above airfield elevation
+  result = calculate_temperature_correction_delta_altitude(
+      ten_thousand_feet_m, Kelvin(-20.1), five_thousand_feet_m);
+  BOOST_CHECK_CLOSE(398, Feet(std::get<0>(result)).v(), 0.103);
+  BOOST_CHECK_EQUAL(3, std::get<1>(result));
+
+  // aircraft 10000ft above airfield elevation
+  result = calculate_temperature_correction_delta_altitude(
+      fifteen_thousand_feet_m, Kelvin(34.9), five_thousand_feet_m);
+  BOOST_CHECK_CLOSE(-1147, Feet(std::get<0>(result)).v(), 0.00201);
+  BOOST_CHECK_EQUAL(4, std::get<1>(result));
+
+  // aircraft 10000ft above airfield elevation
+  result = calculate_temperature_correction_delta_altitude(
+      fifteen_thousand_feet_m, Kelvin(-20.1), five_thousand_feet_m);
+  BOOST_CHECK_CLOSE(813, Feet(std::get<0>(result)).v(), 0.027);
+  BOOST_CHECK_EQUAL(3, std::get<1>(result));
 }
 //////////////////////////////////////////////////////////////////////////////
 
@@ -250,7 +309,8 @@ BOOST_AUTO_TEST_CASE(test_calculate_crossover_altitude) {
   Metres<double> crossover_altitude = calculate_crossover_altitude(cas, mach);
   BOOST_CHECK_CLOSE(9070.813566, crossover_altitude.v(), CALCULATION_TOLERANCE);
 
-  // The TAS should be the same from both CAS and MACH at the crossover_altitude
+  // The TAS should be the same from both CAS and MACH at the
+  // crossover_altitude
   Pascals<double> pressure = calculate_isa_pressure(crossover_altitude);
   Kelvin<double> temperature = calculate_isa_temperature(crossover_altitude);
   MetresPerSecond<double> tas_from_cas =
