@@ -73,6 +73,7 @@ if (CPP_UNIT_TESTS)
         tests/test_main.cpp
 
         tests/test_isa_double.cpp
+        tests/test_temperature_correction.cpp
     )
 
     target_compile_definitions(${PROJECT_NAME}_test PRIVATE BOOST_TEST_DYN_LINK)
